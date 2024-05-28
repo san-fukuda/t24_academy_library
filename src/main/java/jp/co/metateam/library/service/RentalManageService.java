@@ -87,6 +87,11 @@ public class RentalManageService {
         return rentalAvailable;
     }
 
+    public List<RentalManage> findByStockIdAndStatusIn(String StockId) {
+        List<RentalManage> rentalAvailable = this.rentalManageRepository.findByStockIdAndStatusIn(StockId);
+        return rentalAvailable;
+    }
+
     @Transactional
     public void update(Long id, RentalManageDto rentalManageDto) throws Exception {
         try {

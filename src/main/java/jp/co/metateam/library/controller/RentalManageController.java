@@ -27,8 +27,6 @@ import jp.co.metateam.library.values.RentalStatus;
 import java.util.Optional;
 import java.util.Date;
  
- 
- 
 /**
  * 貸出管理関連クラスß
  */
@@ -66,8 +64,6 @@ public class RentalManageController {
         return "rental/index";
     }
  
- 
- 
     @GetMapping("/rental/add")
     public String add(Model model) {
         List<Account> accountList = this.accountService.findAll();
@@ -83,11 +79,16 @@ public class RentalManageController {
  
         return "rental/add";
     }
- 
    
     @PostMapping("/rental/add")
     public String save(@Valid @ModelAttribute RentalManageDto rentalManageDto, BindingResult result, RedirectAttributes ra) {
         try {
+            String dateError = this.findAvailableWithRentalDate(rentalManageDto, rentalManageDto.getStockId());
+
+            if(dateError != null){
+                result.addError(new FieldError("rentalManageDto", "expectedRentalOn", dateError));
+                result.addError(new FieldError("rentalManageDto", "expectedReturnOn", dateError));
+            }
  
             if (result.hasErrors()) {
                 throw new Exception("Validation error.");
@@ -102,15 +103,26 @@ public class RentalManageController {
             ra.addFlashAttribute("rentalManageDto", rentalManageDto);
             ra.addFlashAttribute("org.springframework.validation.BindingResult.stockDto", result);
  
-            return "redirect:/rental/add";
+            return "rental/add";
         }
     }
- 
- 
+
+    //ここでSQLでDBからもってきた日付と入力された日付を比較する、これを上で使って被ってたら上でエラーを投げる
+    public String findAvailableWithRentalDate(RentalManageDto rentalManageDto,  String stockId) {
+        List<RentalManage> rentalAvailable = this.rentalManageService
+        .findByStockIdAndStatusIn(rentalManageDto.getStockId());
+
+        for(RentalManage exist : rentalAvailable) {
+            if(exist.getExpectedRentalOn().compareTo(rentalManageDto.getExpectedReturnOn()) <= 0 && 
+            rentalManageDto.getExpectedRentalOn().compareTo(exist.getExpectedReturnOn()) <= 0){
+                return "選択された日付は登録済みの貸出情報と重複しています";
+            }
+        }
+
+        return null;
+    }
  
     //貸出編集機能
- 
- 
     @GetMapping("/rental/{id}/edit")
     public String edit(@PathVariable("id") String id, Model model) {
         List<Account> accountList = this.accountService.findAll();
@@ -119,11 +131,11 @@ public class RentalManageController {
         model.addAttribute("accounts", accountList);
         model.addAttribute("stockList", stockList);
         model.addAttribute("rentalStatus", RentalStatus.values());
- 
-        RentalManage rentalManage = this.rentalManageService.findById(Long.valueOf(id));
-        RentalManageDto rentalManageDto = new RentalManageDto();
-       
+
         if (!model.containsAttribute("rentalManageDto")) {
+            RentalManage rentalManage = this.rentalManageService.findById(Long.valueOf(id));
+            RentalManageDto rentalManageDto = new RentalManageDto();
+
             rentalManageDto.setId(rentalManage.getId());
             rentalManageDto.setEmployeeId(rentalManage.getAccount().getEmployeeId());
             rentalManageDto.setExpectedRentalOn(rentalManage.getExpectedRentalOn());
@@ -134,12 +146,10 @@ public class RentalManageController {
             model.addAttribute("rentalManageDto", rentalManageDto);
         }
        
- 
-    return "rental/edit";
+        return "rental/edit";
     }
 
-@PostMapping("/rental/{id}/edit")
- 
+    @PostMapping("/rental/{id}/edit")
     public String update(@PathVariable("id") String id, @Valid @ModelAttribute RentalManageDto rentalManageDto, BindingResult result, RedirectAttributes ra, Model model) {
          //リクエストパスのidをString型で受け取る・@Validでバリデーションチェックをしけ結果をBindingResultに格納・RentalManageDtoオブジェクトを@ModelAttributeとして受け取る
          
@@ -175,23 +185,23 @@ public class RentalManageController {
                 }
 
                // 登録処理
+               //指定されたidのrentalManageオブジェクトを更新
                 rentalManageService.update(Long.valueOf(id), rentalManageDto);
-                //指定されたidのrentalManageオブジェクトを更新
-   
-                return "redirect:/rental/index";
                 //更新された場合は指定されたリダイレクト先にデータを返す
+                return "redirect:/rental/index";
  
             } catch (Exception e) {
-                log.error(e.getMessage());
                 //エラーがあった場合はエラーメッセージを表示するようにする
+                log.error(e.getMessage());
  
                 ra.addFlashAttribute("rentalManageDto", rentalManageDto);
                 ra.addFlashAttribute("org.springframework.validation.BindingResult.rentalManageDto", result);
  
- 
                 return String.format("redirect:/rental/%s/edit",id);//書籍編集画面に戻る
-           }
+            }
         }
+
+        //この処理はserviceに書くべき(できれば)
         //ここでSQLでDBからもってきた日付と入力された日付を比較する、これを上で使って被ってたら上でエラーを投げる
         public String findAvailableWithRentalDate(RentalManageDto rentalManageDto,  Long rentalId) {
             List<RentalManage> rentalAvailable = this.rentalManageService
@@ -203,6 +213,7 @@ public class RentalManageController {
                     return "選択された日付は登録済みの貸出情報と重複しています";
                 }
             }
+
             return null;
         }
     }
