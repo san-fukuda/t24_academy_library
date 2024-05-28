@@ -13,7 +13,6 @@ import jp.co.metateam.library.model.RentalManageDto;
 import jp.co.metateam.library.model.RentalManage;
 import java.util.List;
 import jp.co.metateam.library.values.RentalStatus;
-import jp.co.metateam.library.model.AccountDto;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import jakarta.validation.Valid;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -23,9 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import jp.co.metateam.library.model.Account;
 import jp.co.metateam.library.model.Stock;
 import org.springframework.web.bind.annotation.PathVariable;
-import jp.co.metateam.library.values.RentalStatus;
 import java.util.Optional;
-import java.util.Date;
  
 /**
  * 貸出管理関連クラスß
@@ -103,7 +100,7 @@ public class RentalManageController {
             ra.addFlashAttribute("rentalManageDto", rentalManageDto);
             ra.addFlashAttribute("org.springframework.validation.BindingResult.stockDto", result);
  
-            return "rental/add";
+            return "redirect:/rental/add";
         }
     }
 

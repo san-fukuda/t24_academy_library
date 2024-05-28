@@ -110,10 +110,8 @@ public class RentalManageService {
             }
             log.info("ここまで来た2");
 
-
             // 既存レコード取得
             RentalManage updateTargetrentalManage = this.rentalManageRepository.findById(id).orElse(null);
-            //updateTargetrentalManage = setRentalStatusDate(updateTargetrentalManage, rentalManageDto.getStatus());
 
             if (updateTargetrentalManage == null) {
                 throw new Exception("RentalManage record not found.");
