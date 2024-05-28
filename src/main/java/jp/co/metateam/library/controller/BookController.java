@@ -116,7 +116,7 @@ public class BookController {
             
             return "redirect:/book/index";
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("エラーこれ" + e.getMessage());
 
             return "book/edit";
         }
